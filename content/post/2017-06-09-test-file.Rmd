@@ -1,0 +1,15 @@
+---
+title: Test file
+author: Oliver Belmans
+date: '2017-06-09'
+slug: test-file
+categories: []
+tags: []
+banner: ''
+description: ''
+images: []
+menu: ''
+---
+
+<!--more-->
+
