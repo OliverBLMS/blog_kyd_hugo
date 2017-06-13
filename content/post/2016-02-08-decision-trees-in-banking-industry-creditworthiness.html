@@ -20,8 +20,6 @@ menu: ''
 
 
 <!--more-->
-<div id="predicting-creditability" class="section level2">
-<h2>Predicting creditAbility</h2>
 <p>While looking for a interesting Machine Learning exercise I decided to go along with credit scoring exercise. I want to know what kind of information influences the decision for giving someone credit (or not). Typically, a bank would ask you to fill in some kind of assesment form with question about demographics, purpose of the loan, your status of employment and salary. Today, this is not a standard proces.</p>
 <p>The problem here is we want to predict the creditability of new clients based on clients from the past. Client whom we already know if they are credit-worthy or not. One way to solve this problem is with a machine learning such as decision trees. Other algorithms can be used aswell, but decision trees are more comprehensive at the end as I want to know what kind of information has the most influence in this determination proces.</p>
 <p>In this example we already know which client are credit-worthy and which are not (= qualitative characteristic), based on 21 quantitative characteristics. All we have to do is to find (alot of) tests/decisions that partitions those clients as well as possible. Hereby, we want decisions that at the end group the good or bad credit-worthy clients as <strong>pure</strong> as possible. For each possible decisions (or split in the decision tree) we can define a measure of expected purity. During these path of decisions we follow those decisisons with the most <strong>Information Gain</strong>, thus reducing the missing information the most.</p>
@@ -260,6 +258,5 @@ CrossTable(testing$Creditability, credit_cost_pred, prop.chisq = FALSE, prop.c =
 <li>try other methods like <code>randomForest</code>, explore the <code>caret</code> function</li>
 <li>try other meta-algorithms like bagging, cross-validation</li>
 </ul>
-</div>
 </div>
 </div>

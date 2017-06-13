@@ -20,8 +20,6 @@ menu: ''
 <!--more-->
 
 
-## Predicting creditAbility
-
 While looking for a interesting Machine Learning exercise I decided to go along with credit scoring exercise. I want to know what kind of information influences the decision for giving someone credit (or not). Typically, a bank would ask you to fill in some kind of assesment form with question about demographics, purpose of the loan, your status of employment and salary. Today, this is not a standard proces.
 
 The problem here is we want to predict the creditability of new clients based on clients from the past. Client whom we already know if they are credit-worthy or not. One way to solve this problem is with a machine learning such as decision trees. Other algorithms can be used aswell, but decision trees are more comprehensive at the end as I want to know what kind of information has the most influence in this determination proces. 

@@ -1,0 +1,62 @@
+---
+title: Blogdown, a package to create websites
+author: Oliver Belmans
+date: '2017-06-13'
+slug: blogdown-a-package-to-create-websites
+categories:
+  - General
+tags:
+  - addin
+  - package
+banner: ''
+description: ''
+images: ["/favicon.ico"]
+menu: ''
+---
+
+
+
+<!--more-->
+<p><code>Blogdown</code> is a R package to generate static websites based on <a href="http://rmarkdown.rstudio.com/">R Markdown</a> and <a href="https://gohugo.io/">Hugo</a>, a static web engine. To be honost: It’s <strong>fantastic</strong>!<br />
+I’ve been using Wordpress for a while, with all that hassle of copy-pasting html into the wp text editor, adjusting images… Not to mention all the fuzz that goes along when using htmlwidgets. That blog-agony is all over with <code>blogdown</code>.</p>
+<div id="my-take-ways" class="section level2">
+<h2>My take-ways</h2>
+<p>Must read: <a href="https://bookdown.org/yihui/blogdown/">Blogdown online book</a>: definitely read the first 3 chapters and the appendix! I’m using the same theme as <a href="https://rviews.rstudio.com/">Rstudio Rviews blog</a>, which is the <a href="https://github.com/digitalcraftsman/hugo-icarus-theme">icarus theme</a>.<br />
+However, for my blog I made following adjustments:</p>
+<ul>
+<li>removed the banner placeholder</li>
+<li>removed the thumbnail placeholder of the recent post in the right sidebar</li>
+<li>replaced the monokai.css with default github.css for code highlight</li>
+<li>adjust correct padding of post archive</li>
+</ul>
+<p>Adding disqus (comment section below each post) can be annoying, but this process should overcome minor issues:</p>
+<ul>
+<li>add your site to disqus to retrieve the <a href="https://help.disqus.com/customer/portal/articles/466208">disqusShortname</a></li>
+<li>add your disqusShortname in the <code>config.toml</code> file</li>
+<li>run `blogdown::build_site()</li>
+<li>copy everything under the <code>public</code> dir to your <code>web</code> dir on your webserver</li>
+<li>test, test, … afaik.</li>
+</ul>
+<p>Add an image in the <code>yaml</code> metadata of a post. This image will be used in the social-media card when sharing posts with twitter, facebook, linkedin, etc. When generating your <code>html</code> file of the post, it wil start looking for the image from the <code>/static</code> folder, so add a path from this point to your image.</p>
+<ul>
+<li>A good post about this is <a href="http://www.gavinwray.com/twitter-card-and-open-graph-images-in-icarus-theme-for-hugo/">Twitter card and Open Graph images in Icarus theme for Hugo</a></li>
+<li>You can check what your social card will look like with
+<ul>
+<li><a href="https://developers.facebook.com/tools/debug/og/object/">Facebook’s Sharing Debugger</a></li>
+<li><a href="https://cards-dev.twitter.com/validator">Twitter Card validator</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="most-important-take-way" class="section level2">
+<h2>Most important take-way</h2>
+<p>There is a big difference between <code>blogdown::server_site()</code>, <code>blogdown::hugo_build()</code> and <code>blogdown::build_site()</code>:</p>
+<ul>
+<li><code>blogdown::server_site()</code> is for local use only. It will generate <code>html</code> files of your new/adjusted (r)markdown posts.</li>
+<li><code>blogdown::hugo_build()</code> builds the <code>public</code> skeleton, but will not generate new <code>html</code> post compared to <code>blogdown::server_site()</code></li>
+<li><code>blogdown::build_site()</code> builds the <strong>whole</strong> website for publishing
+<ul>
+<li>Make sure you set the <code>baseurl=</code> in the <code>config.toml</code> file correct before using <code>blogdown::build_site()</code> or <code>blogdown::hugo_build()</code>. The <code>baseurl</code> is needed to activate the disqus and the social widgets.</li>
+</ul></li>
+</ul>
+<p>Most likely, I forgot a thing or two. So if you would like to use this theme go fetch it at <a href="https://github.com/OliverBLMS/blog_kyd_hugo">github</a>.</p>
+</div>

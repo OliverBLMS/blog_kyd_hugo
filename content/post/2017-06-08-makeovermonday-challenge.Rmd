@@ -9,7 +9,7 @@ tags:
   - Visuals
 banner: ''
 description: ''
-images: []
+images: ["/post/2017-06-08-makeovermonday-challenge_files/figure-html/unnamed-chunk-8-1.png"]
 menu: ''
 ---
 

@@ -1,0 +1,59 @@
+---
+title: Blogdown, a package to create websites
+author: Oliver Belmans
+date: '2017-06-13'
+slug: blogdown-a-package-to-create-websites
+categories:
+  - General
+tags:
+  - addin
+  - package
+banner: ''
+description: ''
+images: ["/favicon.ico"]
+menu: ''
+---
+
+<!--more-->
+
+`Blogdown` is a R package to generate static websites based on [R Markdown](http://rmarkdown.rstudio.com/) and [Hugo](https://gohugo.io/), a static web engine. To be honost: It's **fantastic**!  
+I've been using Wordpress for a while, with all that hassle of copy-pasting html into the wp text editor, adjusting images... Not to mention all the fuzz that goes along when using htmlwidgets. That blog-agony is all over with `blogdown`. 
+
+## My take-ways
+
+Must read: [Blogdown online book](https://bookdown.org/yihui/blogdown/): definitely read the first 3 chapters and the appendix!
+I'm using the same theme as [Rstudio Rviews blog](https://rviews.rstudio.com/), which is the [icarus theme](https://github.com/digitalcraftsman/hugo-icarus-theme).  
+However, for my blog I made following adjustments:
+
+  * removed the banner placeholder
+  * removed the thumbnail placeholder of the recent post in the right sidebar 
+  * replaced the monokai.css with default github.css for code highlight
+  * adjust correct padding of post archive
+
+Adding disqus (comment section below each post) can be annoying, but this process should overcome minor issues:
+
+  * add your site to disqus to retrieve the [disqusShortname](https://help.disqus.com/customer/portal/articles/466208)
+  * add your disqusShortname in the `config.toml` file
+  * run `blogdown::build_site()
+  * copy everything under the `public` dir to your `web` dir on your webserver
+  * test, test, ... afaik.
+
+Add an image in the `yaml` metadata of a post. This image will be used in the social-media card when sharing posts with twitter, facebook, linkedin, etc. When generating your `html` file of the post, it wil start looking for the image from the `/static` folder, so add a path from this point to your image.
+
+  * A good post about this is [Twitter card and Open Graph images in Icarus theme for Hugo](http://www.gavinwray.com/twitter-card-and-open-graph-images-in-icarus-theme-for-hugo/)
+  * You can check what your social card will look like with 
+      + [Facebook’s Sharing Debugger](https://developers.facebook.com/tools/debug/og/object/)
+      + [Twitter Card validator](https://cards-dev.twitter.com/validator)
+
+## Most important take-way
+
+There is a big difference between `blogdown::server_site()`, `blogdown::hugo_build()` and `blogdown::build_site()`:
+
+  * `blogdown::server_site()` is for local use only. It will generate `html` files of your new/adjusted (r)markdown posts.
+  * `blogdown::hugo_build()` builds the `public` skeleton, but will not generate new `html` post compared to `blogdown::server_site()`
+  * `blogdown::build_site()` builds the **whole** website for publishing 
+      + Make sure you set the `baseurl=` in the `config.toml` file correct before using `blogdown::build_site()` or `blogdown::hugo_build()`. The `baseurl` is needed to activate the disqus and the social widgets.
+
+
+Most likely, I forgot a thing or two. So if you would like to use this theme go fetch it at  [github](https://github.com/OliverBLMS/blog_kyd_hugo).
+  
