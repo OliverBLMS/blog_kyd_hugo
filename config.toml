@@ -1,10 +1,10 @@
-baseurl = "https://example.org/"
+baseurl = "http://knowyourdata.be/"
 languageCode = "en-us"
-title = "Icarus"
+title = "Know Your Data"
 # Enable comments by entering your Disqus shortname
-# disqusShortname = "blmns"
+disqusShortname = "knowyourdata"
 # Enable Google Analytics by entering your tracking code
-googleAnalytics = ""
+googleAnalytics = "UA-70090053-1"
 # Define the number of posts per page
 paginate = 10
 footnotereturnlinkcontents = "↩"
@@ -14,15 +14,16 @@ theme = "hugo-icarus-theme"
 
 
 [permalinks]
-    post = "/:year/:month/:day/:slug"
+   post = "/:year/:month/:day/:slug"
+#    post = "/:slug"
 
 
 [params]
     # Tell me who you are
     author = "Oliver Belmans"
-    bio = "Blogger - R lover - Gopher"
+    bio = "Blogger - R lover"
     location = "Earth"
-    site_description = ""
+    site_description = "Personal project space"
     copyright  = "Powered by [Hugo](//gohugo.io). Theme by [PPOffice](http://github.com/ppoffice)."
     avatar = "css/images/avatar.png"
     # Enter your email address to display your Gravatar icon in the profile. If not set the theme
@@ -63,8 +64,8 @@ theme = "hugo-icarus-theme"
 #    link   = "categories/"
 
 # Enter a link for the follow button on the left
-#[params.profile]
-#    follow_button = "https://github.com/OliverBLMS"
+[params.profile]
+    follow_button = "https://twitter.com/OliverBelmans"
 
 
 [social]

@@ -1,0 +1,264 @@
+---
+title: MakeOverMonday Challenge
+author: oliver Belmans
+date: '2017-06-08'
+slug: makeovermonday-challenge
+categories:
+  - R
+tags:
+  - Visuals
+banner: ''
+description: ''
+images: []
+menu: ''
+---
+
+<!--more-->
+
+
+[Makeovermonday](http://www.makeovermonday.co.uk/) is a weekly social data project with the intention to rework some random chosen chart. A new challenge is posted every week on the [data set page](http://www.makeovermonday.co.uk/data/). Although it is more focused to the Tableau community, I took the challenge to rework the chart with R. This is the challenge from [last week](https://knoema.com/atlas/topics/Telecommunication/Internet-Users/Internet-users-per-100-people?type=maps) which holds a dataset with a ratio of internet users per 100 people for most of the Countries.
+
+This is a step-by-step explanation of my own process, so let's start:
+
+# Startingpoint
+
+First, look a little bit at the data and make a simple line/dot plot.
+
+```{r, message=FALSE, warning=FALSE}
+# Load library
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+library(countrycode)
+library(rworldmap)
+library(leaflet)
+library(viridis)
+library(ggmap)
+
+# ingest data and add usefull labels
+internet_set <- read_excel("datasets/Internet_users_per_100_ppl.xlsx")
+names(internet_set) <- c("Country", "Year", "Users")
+# look at first rows
+head(internet_set)
+# Plot basic chart
+ggplot(internet_set, aes(x = factor(Year), y = Users, group = Country)) + geom_line() + geom_point()
+```
+
+The dataset includes mostly 0 or very low values for the year 1990 so lets remove this year. Choosing year 2000 is a better starting point for the visualization.
+
+```{r, message=FALSE, warning=FALSE}
+# remove irrelevant year data (1990)
+# also round the ration value to 2 decimals (%)
+internet_set <- filter(internet_set, Year != 1990) %>%
+  mutate(Users = round(Users, 2))
+#plot
+ggplot(internet_set, aes(x = factor(Year), y = Users, group = Country)) + geom_line() + geom_point()
+```
+
+OK, this seems to be a better starting point that actually make sense. Next, it should be nice to a distinction between continents of the countries. I assume that more wealthy countries are also noticeable at continent level. Wealthy countries should be visual at the top of the chart and less wealthy countries more at the bottom.
+
+```{r, message=FALSE, warning=FALSE}
+
+# add continent to countries
+internet_set$continent <- countrycode(sourcevar = internet_set$Country, origin = "country.name", destination =  "continent" , origin_regex = TRUE)
+
+
+# plot
+ggplot(internet_set, aes(x = factor(Year), y = Users, group = Country, colour = continent)) + 
+  geom_line() + geom_point() + 
+  theme(legend.position = "bottom")
+
+```
+
+We can already deduce something from this, but it is still a bunch of (overlapping) lines.
+I deciced to split up the plot into facets for each continent.
+
+```{r, message=FALSE, warning=FALSE}
+# plot basic chart
+ggplot(internet_set, aes(x = factor(Year), y = Users, group = Country, colour = continent)) + geom_line() + geom_point() + facet_wrap(~continent, nrow = 1)
+
+```
+
+We can see that our dataset hold NA's for some countries. Just erase all NA'S in the set should be fine at this point.
+It's getting better, but there is still to much detail. 
+
+```{r}
+# remove NA's in the dataset
+internet_set <- na.omit(internet_set)
+# plot basic chart
+ggplot(internet_set, aes(x = factor(Year), y = Users, group = Country, colour = continent)) + geom_line() + geom_point() + facet_wrap(~continent, nrow = 1)
+
+
+filter(internet_set, Year %in% c(2000, 2015), continent == "Europe") %>%
+  # plot
+  ggplot(., aes(x = factor(Year), y = Users, group = Country, colour = continent)) + 
+  geom_line() + geom_point() + 
+  theme(legend.position = "bottom")
+
+```
+
+## Little parrallel track on the plot
+
+Instead of using lines/dot plot, why not scatter it per year and again color it per continent. But this plot doesn't really add support to understand the information. 
+
+```{r}
+#
+ggplot(internet_set, aes(x = factor(Year), y = Users, group = Country, colour = continent)) + 
+  geom_jitter(aes(size = Users), alpha = 0.4, width = 0.3) + 
+  theme_minimal() +
+  theme(legend.position = "top")
+
+```
+
+## Final plot
+
+To continue with the intial setup. 
+
+* lets minimize the included year: only take 2000, 2010, 2015
+* add some nice colors
+* remove / add usefull axis titles
+* add titles + subtitles
+
+```{r,  fig.height= 3, out.width=800}
+
+ggplot_fun <- function(dataset) {
+  dataset %>%
+    ggplot(., aes(x = factor(Year), y = Users, group = Country, colour = continent)) + geom_blank() +
+    annotate("rect", xmin=1.5, xmax=2.5, ymin=0, ymax=Inf, alpha=0.2, fill="#DADFE1") +
+    geom_line(colour = "gray95", position = position_dodge(0.8)) +
+    geom_point(alpha = 0.7, position = position_dodge(0.8)) + 
+    geom_vline(xintercept = c(1.5,2.5), colour = "white", size = 0.3)+
+    theme_minimal() +
+    theme(legend.position = "none",
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.major.y = element_line(colour = "gray95"),
+          panel.spacing.x = unit(1.5, "lines")
+    ) + 
+    scale_y_continuous(breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+    scale_color_viridis(discrete=TRUE) +
+    facet_wrap(~continent, nrow = 1) +
+    ylab("Internetuser per 100 citizens") + xlab("") +
+    ggtitle(label = "Internet users per 100 people", subtitle = "Internet users are people with access to the worldwide network.")
+  
+}
+
+ggplot_fun(filter(na.omit(internet_set), Year %in% c(2000, 2010, 2015)))
+
+```
+
+Lets focus more on the overall evalution and only includes the first year 2000 and the last 2015
+
+```{r, fig.height= 3, out.width=800}
+ggplot_fun(filter(na.omit(internet_set), Year %in% c(2000, 2015)))
+```
+
+## Another appraoch
+
+Only focus on one continent, for example Europe and see the country's progress from 2000 to 2015.
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot_fun2 <- function(dataset) {
+  dataset %>%
+    ggplot(., aes(x = factor(Year), y = Users, group = Country, colour = continent)) + geom_blank() +
+    annotate("rect", xmin=1.5, xmax=2.5, ymin=0, ymax=Inf, alpha=0.2, fill="#DADFE1") +
+    geom_line(colour = "gray95") +
+    geom_point(alpha = 0.7, size = 3) + 
+    geom_vline(xintercept = c(1.5,2.5), colour = "white", size = 0.3)+
+    theme_minimal() +
+    theme(legend.position = "none",
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.major.y = element_line(colour = "gray95"),
+          panel.spacing.x = unit(1.5, "lines")
+    ) + 
+    scale_y_continuous(breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+    scale_color_viridis(discrete=TRUE) +
+    facet_wrap(~continent, nrow = 1) +
+    ylab("Internetuser per 100 citizens") + xlab("") +
+    ggtitle(label = "Internet users per 100 people", subtitle = "Internet users are people with access to the worldwide network.")
+  
+}
+
+ggplot_fun2(filter(na.omit(internet_set), Year %in% c(2000, 2015), continent == "Europe"))
+
+```
+
+I should be nice to explore this graph interactively. Lets make a dynamic or intertive plot with [htmlwidget](http://www.htmlwidgets.org/). Lets pick `library(highcharter)` for this.
+The plot is definitely not perfect. I want to highlight one indidivual country, whereas the rest should color gray. 
+
+```{r, message=FALSE, warning=FALSE}
+library(highcharter)
+library(htmlwidgets)
+
+a <- filter(na.omit(internet_set), Year %in% c(2000, 2015), continent == "Europe") %>% droplevels() %>%
+  hchart(., "scatter", hcaes(x = factor(Year), y = Users, group = Country)) %>%
+  hc_title(text = "Internet users per 100 people",
+           margin = 20, align = "left",
+           style = list(color = "#2b908f", useHTML = TRUE, fontWeight="bold")) %>% 
+  hc_subtitle(text = "Internet users are people with access to the worldwide network.",
+              align = "left",
+              style = list(color = "#90ed7d")) %>%
+  hc_yAxis( lineColor = 'transparent',
+       tickLength = 0) %>%
+  hc_xAxis( lineColor ='transparent',
+       tickLength= 0,
+       title = list(text = "Year")) %>%
+  hc_legend(enabled = FALSE) %>%
+  hc_exporting(enabled = TRUE) %>%
+  hc_plotOptions(scatter = list(lineWidth = 2))
+    
+a
+
+```
+
+## Back to the original
+
+R has also some nice packages to make interactive geo-spatial plots such as the original chart, such as the `leaflet` package or `highcharter`. First, a `SpatialPolygonsDataFrame` must be created that hold the countries shapes and the data that we want to visualize.
+
+```{r, message=FALSE, warning=FALSE}
+# get iso3 codes
+# this will match with reg expression. a SpatialPolygonsDataFrame will be created by merging with this iso3 column.
+internet_set$iso3c <- countrycode(sourcevar = internet_set$Country, origin = "country.name", destination =  "iso3c" , origin_regex = TRUE)
+pal <- colorQuantile(palette = "viridis", domain = internet_set$Users, 5)
+
+# plot function
+leaflet_plot <- function(dataset, year) {
+  bins <- c(0, 20, 40, 60, 80, 100)
+  pal <- colorBin(palette = "viridis", domain = dataset$Users, bins = bins)
+  user_values <- dataset$Users
+  # apply filter
+  internet_set_filtered <- filter(internet_set, Year == year)
+  # get SpatialPolygonsDataFrame
+  sp_internet <- joinCountryData2Map(dF = internet_set_filtered, joinCode = "ISO3", nameJoinColumn = "iso3c", nameCountryColumn = "Country2")
+  
+  # Make colorpalette for leaflet
+  leaflet(sp_internet) %>% 
+    addPolygons(
+      fillColor = ~pal(Users), 
+      label = ~paste(Country, Users),
+      smoothFactor = 0.5,
+      weight = 1,
+      opacity = 1,
+      color = "white",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 3,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE),
+      labelOptions = labelOptions(direction = "auto")) %>%
+    addLegend("topright", pal = pal, values = ~user_values,
+              title = "Internetusers per 100 citizens",
+              # labFormat = labelFormat(prefix = "%"),
+              opacity = 1) 
+}
+
+leaflet_plot(internet_set, 2015)
+
+
+```
+

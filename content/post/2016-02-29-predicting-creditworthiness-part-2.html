@@ -1,0 +1,279 @@
+---
+title: 'Predicting creditworthiness: part-2'
+author: Oliver Belmans
+date: '2016-02-29'
+slug: predicting-creditworthiness-part-2
+categories:
+  - R
+tags:
+  - Predictive
+  - banking industry
+  - decision tree
+  - Cross validation
+  - Boosting
+  - Bagging
+  - Random Forest
+banner: ''
+description: ''
+images: []
+menu: ''
+---
+
+
+
+<!--more-->
+<div id="refining-the-credit-models" class="section level2">
+<h2>Refining the credit model(s)</h2>
+<p>To continue with the creditworthiness case, I want to explore this case a little bit more by adding more meta algorithms such as boosting, winnowing, cross validation etc. Additionally, I’ll use <code>randomforest</code> as classifier algorithm.</p>
+<p>I’m still using the same german credit data as in the previous post. I’m also using the same train/testest. Each model is stored into one object <code>models</code>.</p>
+<pre class="r"><code># object that will store all the models in a list
+models &lt;- list()</code></pre>
+<p>I start with three different models, which are all generated with the <code>C5.0</code> algorithm. <strong>First model</strong> is a default model with no extra features. <strong>Second model</strong> is amplified with the boosting feature: instead of generating just one classifier it will generate several classifiers. After each iteration it will focus more on misclassified examples for reducing bias. The <strong>third model</strong> has the <code>winnow</code> parameter set to <code>TRUE</code>. Basicly, it will search over the 20 attributes of the dataset and pre-select a subset of attribute that will be used to construct the decision tree or ruleset. Read more at <a href="http://www.rulequest.com/see5-unix.html#WINNOWING">C5.0 tutorial</a></p>
+<pre class="r"><code># C5.0 package
+set.seed(2)
+# train model
+baseMod &lt;- 
+  C5.0(
+    training[,-1],
+    training$Creditability)
+# store basemodel into the models object
+models$baseMod &lt;- baseMod
+
+# Using boosting with C5.0 model
+set.seed(2)
+# train model
+BoostMod &lt;- 
+  C5.0(
+    training[,-1],
+    training$Creditability,
+    trials = 100)
+# store boostmod into the models object
+models$BoostMod &lt;- BoostMod
+
+# Using winnow and boosting
+set.seed(2)
+# train model
+WinnowMod &lt;- 
+  C5.0(
+    training[,-1],
+    training$Creditability,
+    control = C5.0Control(winnow = TRUE),
+    trials = 100)
+# store winnowmod into the models object
+models$WinnowMod &lt;- WinnowMod</code></pre>
+<p>So the models created thus far:</p>
+<pre class="r"><code>names(models)</code></pre>
+<pre><code>## [1] &quot;baseMod&quot;   &quot;BoostMod&quot;  &quot;WinnowMod&quot;</code></pre>
+</div>
+<div id="performance-measures" class="section level2">
+<h2>Performance measures</h2>
+<p>After training, lets gather the performance of those models on new examples. With the <code>ROCR</code> package we can do lots of performance tests such as: Area under the Curve, sensitivity, specificity, accuracy, etc. I made a few functions <code>accuracyTester</code>, <code>getPerformance</code>, <code>getSensSpec</code> and <code>getVarImportance</code> so I can run those function for each model in the <code>models</code> object.</p>
+<pre class="r"><code># function for returning accuracy on test dataset
+accuracyTester &lt;- 
+  function(predictModel) {
+    temp &lt;- predict(predictModel, testing)
+    postResample(temp, testing$Creditability)
+  }
+# function for calculating performance
+# input for the ROC curve
+getPerformance &lt;- 
+  function(modelName) {
+    score &lt;- predict(modelName, type= &quot;prob&quot;, testing)
+    pred &lt;-  prediction(score[,1], testing$Creditability)
+    perf &lt;- performance(pred, &quot;tpr&quot;, &quot;fpr&quot;)
+    return(perf)
+  }
+# function for calculating specificity and sensitivity
+getSensSpec &lt;- 
+  function(modelName) {
+    score &lt;- predict(modelName, type= &quot;prob&quot;, testing)
+    pred &lt;-  prediction(score[,1], testing$Creditability)
+    perf &lt;- performance(pred, &quot;sens&quot;, &quot;spec&quot;)
+    return(perf)
+  }</code></pre>
+<div id="roc-and-accuracy-plot" class="section level3">
+<h3>ROC and Accuracy plot</h3>
+<p>One method to evaluate the models is by calculating the overall accuracy of each model. The <code>BoostMod</code> has the highest accuracy.</p>
+<p><img src="/post/2016-02-29-predicting-creditworthiness-part-2_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>A more reliable method to evaluate the model’s performace is the Receiver Operating Characteristics. It’s a well used visualization technique to evaluate binary classifiers. Predicting good or bad creditworthiness is indeed a binary classification. A ROC curve is created by plotting the true positive rate (TPR) or sensitivity against the false positive rate (FPR), thus it shows the tpr as a function of fpr.</p>
+<p>For each fpr it is shown that the <code>BoostMod</code> has the highest tpr.</p>
+<p><img src="/post/2016-02-29-predicting-creditworthiness-part-2_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="caret-package" class="section level2">
+<h2>Caret package</h2>
+<p>Another great package I found is the <code>caret</code> package. It has an uniform interface to a lot of <a href="https://topepo.github.io/caret/modelList.html">predictive algorithms</a>. Also, it provides a generic approach for visualization, pre-processing, data-splitting, variable importance, model performance and parallel processing. This can be handy, since different modeling functions have different syntax for model training, predicting and parameter tuning.</p>
+<p><code>Caret</code> has bindings to the <code>C5.0</code> algorithm, therefor it will also tune the parameters boosting and winnowing. Another way to get a more reliable estimate of accuracy is by <a href="http://genome.tugraz.at/proclassify/help/pages/XV.html"><strong>K-fold cross-validation</strong></a>. Just for illustration I will use a 10-fold cross validation, but will use it only on our training set. So I can use the testset for the other performance measures.</p>
+<p>This image illustrates the mechanics of cross-validation: <img src="https://images.duckduckgo.com/iu/?u=http%3A%2F%2Fchrisjmccormick.files.wordpress.com%2F2013%2F07%2F10_fold_cv.png&amp;f=1" alt="10-fold cross-validation" /></p>
+<pre class="r"><code># a list of values that define how this function acts
+ctrl &lt;- 
+  trainControl(method = &#39;repeatedcv&#39;, # 10-fold cv
+               number=10,             # 10-fold cross-validation
+               repeats=5)             # 5-repeats 
+# train model
+set.seed(2)
+cvMod &lt;- 
+  train(form = Creditability ~.,
+        data = training,
+        method     = &quot;C5.0&quot;,
+        trControl  = ctrl,
+        tuneGrid = expand.grid(trials = 15, model = c(&quot;tree&quot;, &quot;rules&quot;), winnow = c(T,F)))
+# store rfmodel into the models object
+models$cvMod &lt;- cvMod</code></pre>
+<p><img src="/post/2016-02-29-predicting-creditworthiness-part-2_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>So far I started exploring the construction of a single classification tree with the <code>C5.0</code> packages. I tried to improve the performance by adding an ensemble learner (boosting). Looking at the ROC and Accuracy plot this seems to be the best performing model so far. Another ensemble learner can be done for example with the <code>randomForest</code> package. Intead of using boosting or cross-validation it will use another technique called <a href="https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#intro"><strong>bagging</strong></a> (__b__ootstrap __agg__regat<strong>ing</strong>).</p>
+<p>Here, I’m only learning a forest on the training set, so I can evaluate its performance just like the other models.</p>
+<pre class="r"><code>library(randomForest)
+# RANDOMFOREST
+set.seed(2)
+rfModel &lt;- 
+  randomForest(form = Creditability ~., data = training,
+               ntree=500, 
+               importance=T, 
+               proximity=T,
+               keep.forest = TRUE
+  )
+# store rfmodel into the models object
+models$rfModel &lt;- rfModel</code></pre>
+<p>A slight improvement can be seen on the ROC curve. The model with cross-validation and randomforest are slightly higher on the curve.</p>
+<p><img src="/post/2016-02-29-predicting-creditworthiness-part-2_files/figure-html/unnamed-chunk-10-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Another way to evaluate the ROC performance can be done by calculating the <strong>Area under the Curve</strong>. Again, both previous best models have the same and highest AUC.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+baseMod
+</th>
+<th style="text-align:right;">
+BoostMod
+</th>
+<th style="text-align:right;">
+WinnowMod
+</th>
+<th style="text-align:right;">
+cvMod
+</th>
+<th style="text-align:right;">
+rfModel
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0.77
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+</tr>
+</tbody>
+</table>
+<p>The accuracy of rfModel has the highest accuracy, but at what cost?</p>
+<p><img src="/post/2016-02-29-predicting-creditworthiness-part-2_files/figure-html/unnamed-chunk-12-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>I guess a bank will choose a more conservative approach and follows a strategy with a more precise prediction for bad creditworthiness. Thus, a bank will prefer to avoid more false positives (predicted good, actual bad) than false negatives (predicted bad, actual true). So I would assume banks will likely choose a model with a good specificity.</p>
+<p>Given this notion a bank can evaluate its options by looking at both:</p>
+<ul>
+<li>sensitivity = <span class="math inline">\(number of true positives \over number of true positives + number of false negatives\)</span></li>
+<li>specificity = <span class="math inline">\(number of true negatives \over number of true negatives + number of false positives\)</span></li>
+</ul>
+<p>For each given model:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+cut
+</th>
+<th style="text-align:right;">
+sens
+</th>
+<th style="text-align:right;">
+spec
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+baseMod
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+BoostMod
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+WinnowMod
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+cvMod
+</td>
+<td style="text-align:right;">
+0.64
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rfModel
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+</tr>
+</tbody>
+</table>
+</div>

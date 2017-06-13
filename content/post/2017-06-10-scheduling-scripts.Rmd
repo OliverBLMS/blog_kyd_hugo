@@ -1,0 +1,47 @@
+---
+title: scheduling scripts
+author: Oliver Belmans
+date: '2017-04-24'
+slug: scheduling-scripts
+categories:
+  - R
+tags:
+  - addin
+  - taskscheduler
+banner: ''
+description: ''
+images: []
+menu: ''
+---
+
+<!--more-->
+
+
+In most cases, you'll write a R script that pulls data, manipulates it and dumps the output to a database or you'll create a beautiful report in `rmarkdown`. Suppose you want to run this script or report every day, week, day, etc. Well, there are a few possibilities for automating these procedures on Windows machine.
+
+## Windows Task Scheduler:
+
+You can use the default windows task scheduler. To do so, you can create a cmd file including the path to your Rscript.exe and the path to your R script: 
+`"yourpathto\...\R\bin\Rscript.exe" "yourpathto\...\myRscript.R"`. 
+You can also add a log output `"yourpathto\...\R\bin\Rscript.exe" "yourpathto\...\myRscript.R" >> "yourpathto\...\logfile.txt`. Next, add this cmd file as a new task to your windows scheduler and define the trigger conditions. Or you can do this directly withing the windows scheduler.
+
+There's a nice tutorial on youtube if you want to learn more about the basics: [Scheduling R Tasks via Windows Task Scheduler](https://youtu.be/UDKy5_SQy2o)
+
+## TaskscheduleR
+
+`taskscheduleR` is a recently released R package that will schedule your R scripts using `SCHTASKS`, a commandline front-end for windows' task scheduler. This package includes most functions such as returning a list of scheduled tasks `taskscheduler_ls()`, removing a task `taskscheduler_delete()` and ofcourse adding a new task `taskscheduler_create()`. Take a look at the official blog-post from Jan Wijfels at: [R package to schedule R scripts with the Windows task manager](http://www.bnosac.be/index.php/blog/56-taskscheduler-r-package-to-schedule-r-scripts-with-the-windows-task-manager).
+
+## Rstudio addin TaskscheduleR
+
+The source code of taskscheduleR is avaible on [github](https://github.com/jwijffels/taskscheduleR) and i just pushed a Rstudio Addin for this package. This will allow you to add/stop/remove your task with a clean and easy UI. It also keeps a central repository for your R tasks so that you can easily edit the original script. You only need to overwrite the existing task of the same name. I've included a task check which will indicate if the uploaded script already exists.
+
+### Addin a new task
+![](/images/taskscheduleR-rstudioaddin.png)
+
+
+## ScheduleR
+
+Lastly, scheduleR is a schedule framework created by [Bart Smeets](https://github.com/Bart6114/scheduleR) and has been tested under GNU/Linux and Windows. It's designed to be an intuitive interface for scheduling R scripts and Rmarkdown files, but also for deploying shiny apps. Yes, shiny apps! It comes with a nice web interface using Node.js and mongodb as back-end. What makes this framework so special? It has a great interface, comes with user management, keeps track of detailed logging and status reports. These status reports and the Rmarkdown reports can be send directly via email to a list of recipients or to a file directory. 
+
+
+

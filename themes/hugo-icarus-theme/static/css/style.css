@@ -1385,7 +1385,7 @@ ol.toc {
   page-break-inside: avoid;
   overflow: hidden;
   break-inside: avoid-column;
-  padding: 0;
+  padding: 1em;
   margin-bottom: 15px;
 }
 .archive-article:before,
@@ -1843,7 +1843,7 @@ ol.toc {
   }
 }
 #recent-post li {
-  padding: 10px 0 10px 94px;
+  padding: 10px 0 10px 0px;
 }
 #recent-post li:before,
 #recent-post li:after {
@@ -1857,6 +1857,7 @@ ol.toc {
   padding: 10px 0px;
 }
 #recent-post li .item-thumbnail {
+  display: none;
   opacity: 1;
   float: left;
   margin-left: -94px;

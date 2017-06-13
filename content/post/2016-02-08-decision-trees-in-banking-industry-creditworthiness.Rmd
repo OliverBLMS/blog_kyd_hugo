@@ -1,0 +1,217 @@
+---
+title: 'Decision trees in banking industry: creditworthiness'
+author: Oliver Belmans
+date: '2016-02-08'
+slug: decision-trees-in-banking-industry-creditworthiness
+categories:
+  - R
+tags:
+  - decision tree
+  - Predictive
+  - banking industry
+  - Information gain
+  - Entropy
+banner: ''
+description: ''
+images: []
+menu: ''
+---
+
+<!--more-->
+
+
+## Predicting creditAbility
+
+While looking for a interesting Machine Learning exercise I decided to go along with credit scoring exercise. I want to know what kind of information influences the decision for giving someone credit (or not). Typically, a bank would ask you to fill in some kind of assesment form with question about demographics, purpose of the loan, your status of employment and salary. Today, this is not a standard proces.
+
+The problem here is we want to predict the creditability of new clients based on clients from the past. Client whom we already know if they are credit-worthy or not. One way to solve this problem is with a machine learning such as decision trees. Other algorithms can be used aswell, but decision trees are more comprehensive at the end as I want to know what kind of information has the most influence in this determination proces. 
+
+In this example we already know which client are credit-worthy and which are not (= qualitative characteristic), based on 21 quantitative characteristics. All we have to do is to find (alot of) tests/decisions that partitions those clients as well as possible. Hereby, we want decisions that at the end group the good or bad credit-worthy clients as __pure__ as possible. For each possible decisions (or split in the decision tree) we can define a measure of expected purity. During these path of decisions we follow those decisisons with the most __Information Gain__, thus reducing the missing information the most. 
+
+### Get the data
+
+The dataset I'm using has already been preprocessed. If you would like the original dataset take a look at the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29). The dataset holds both numeric and categoric variables, but has been mapped to only numeric variables. See the [appendix here](https://onlinecourses.science.psu.edu/stat857/node/222) for the final categorical classification. 
+
+```{r c loading data, message=FALSE, warning=FALSE}
+# Used packages
+require(dplyr)      # for most data manipulation
+require(caret)      # acces to alot of predictors
+require(ggplot2)    # nice plots
+require(gridExtra)  # multiplots
+# Loading data
+credit <- 
+  read.csv("datasets/german_credit.csv", stringsAsFactors = FALSE) 
+# Remove . dots in names
+names(credit) <- 
+  gsub(pattern = "\\.", x = names(credit), replacement = "")
+# Make target class factor
+credit$Creditability <- 
+  factor(credit$Creditability, levels = c(1, 0), labels = c("Good", "Bad"))
+
+```
+
+### Exploring the data
+
+Quick overview of few characteristics to get an idea of the dataset:
+
+```{r}
+# dimension: 20 quant. characteristics and 1 target class (creditability)
+dim(credit)
+# show few records
+credit[18:24, 1:6]
+```
+
+
+
+A bivariate visualization with summary statistics can provide usefull insights of the dataset, as well at the target variable. Most people asking for a credit is the group between 20-40 years but it not so obvious to decide which age is better to get a credit or not. 
+
+```{r c data exploration, echo=FALSE, fig.height=6, fig.width=9}
+myTheme <- 
+  theme_bw() + theme(panel.border = element_blank(), legend.position = "none") 
+a <- ggplot(credit, aes(x= Creditability,  y = Ageyears, fill = Creditability)) + 
+  geom_boxplot() + myTheme + xlab("Creditability") + scale_fill_brewer(palette = 4) + ggtitle(label = "Boxplot Age vs Creditability")
+b <- ggplot(credit, aes(x=Creditability, y = CreditAmount, fill = Creditability,  group = Creditability)) + geom_boxplot() + myTheme + xlab("Creditability") + scale_fill_brewer(palette = 4) + ggtitle(label = "Boxplot Credit amount vs Creditability")
+c <- ggplot(credit, aes(Ageyears)) + geom_histogram(binwidth = 5, fill = "powderblue", color = "gray34") + myTheme + xlab("Age") + ggtitle(label = "Histogram Age of clients")
+d <- ggplot(credit, aes(CreditAmount)) + geom_histogram(binwidth = 1000, fill = "powderblue", color = "gray34") + myTheme + xlab("Credit amount") + ggtitle(label = "Histogram Credit amount")
+grid.arrange(a, b, c, d,  nrow = 2)
+```
+
+This multivariate visualizations of only a few variables shows that it's not that simple to group the classes of creditability (good/bad).
+All points lie upon each other for the characteristics credit amount, duration of credit and age.
+
+```{r matrix plot, echo=FALSE, fig.height=9, fig.width=9, fig.align='center'}
+require(AppliedPredictiveModeling)
+transparentTheme(trans = .4)
+
+featurePlot(x = select(credit, CreditAmount, Ageyears, DurationofCreditmonth), 
+            y = credit$Creditability,
+            plot = "pairs",
+            auto.key = list(columns = 2))
+```
+
+Let's look at the summary of the qualitative characteristic
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+summary(credit$Creditability)
+```
+
+The dataset is slightly unbalanced to learn from. 
+
+### Preparing the data
+
+Before training machine learning algorithms we need to split up the dataset into a training- and testset.
+This can be done with `base R`, `dplyr` or with  `caret`'s function `createDataPartition`, which will take a stratified sample. Thus, respecting the distribution of our target label in both sets.
+
+```{r c sample data}
+# Split full dataset into a training and test set
+set.seed(2)
+# dplyr
+credit = sample_n(credit, size = nrow(credit))
+training = sample_frac(credit, size =0.7)
+testing = setdiff(credit, training)
+
+# caret
+TrainPart <- createDataPartition(y = credit$Creditability, 
+                    times = 1, 
+                    p = 0.7, 
+                    list = FALSE)
+training = credit[TrainPart,]
+testing = credit[-TrainPart,]
+```
+
+### Training a model 
+Very popular classification algorithms are `C4.5` and `C5.0`. For this problem I choose the `C5.0` because it incorporates a misclassification cost and `C4.5` doesn't have this feature. This mean that I don't want all errors treated as equal but more like this: If the model predicts "good credithworthiness" but it is actual a "bad" one, these errors should get a higher cost in order to avoid them while learning our decision tree. 
+
+#### Train
+
+```{r c c50 package, include=FALSE}
+require(C50)
+credit_model <- 
+  C5.0(
+  training[,-1],
+  training$Creditability)
+```
+
+Our model has learned some ruleset that can be visualized as a tree. Note that not all leaves (terminal nodes) are pure!
+```{r, echo=FALSE, fig.height=6, fig.width=9}
+plot(credit_model, subtree = 22)
+```
+
+We can also take a look at the overal predictor importance, since I'm mostly interested in this. 
+```{r, echo=TRUE}
+# ?C5imp
+C5varImp <- C5imp(credit_model, metric = "usage")
+C5varImp
+```
+
+More details about the model are shown with `summary(credit_model)`. The model has an error rate of 6.9% (48/700 examples misclassified). A total of 34 actual bad creditability were incorrectly classified as good credithworthiness (false positives), while 14 good creditability were misclassified as bad ones (false negatives). The error rate on the training data is probably very optimistic, so lets evaluate this on the testset.
+
+### Evaluating model performance on new examples
+
+```{r c predict}
+# run predict model on new examples
+predClass <- 
+  predict.C5.0(credit_model, testing) 
+# Confusion matrix
+require(gmodels)
+CrossTable(testing$Creditability, predClass, prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE, dnn = c('actual default', 'predicted default'))
+
+```
+
+On the testset a total of 92/300 cases are misclassified. Thus, this gives us an error rate of 30%. This is a lot higher than the 6.9% error rate from the traininset. The model is about 70% accurate... However, this metric is not ideal to use with unbalanced data, but gives a sense of the overall prediction.
+
+### Methods to improve the model: Boosting
+
+Boosting algorithms consist of iteratively learning weak classifiers and adding them together to end with a final strong classifier. During each iteration, weights are given to those examples that are misclassified whereas examples lose weights when classified correctly. Thus, the next iteration focusses more on the examples that previously were misclassified.  
+The `C5.0` algorithm has a boost functionality that can be controlled with the `trails` parameter.
+
+```{r}
+credit_boost <- 
+  C5.0(training[-1], 
+  training$Creditability, 
+  trials = 15) # an integer specifying the number of boosting iterations
+
+# summary(credit_boost)
+boostPred <-
+  predict.C5.0(credit_boost, testing, trials = credit_boost$trials["Actual"]) 
+# Confusio matrix
+CrossTable(testing$Creditability, boostPred, prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE, dnn = c('actual default', 'predicted default'))
+
+```
+
+Error rate (on test set) in now down to 25.6%. Only a minor improvement is achieved with boosting. 
+
+### Costmatrix
+
+Let's implement a cost matrix so that not all errors are treated as equal but implements asymmetric costs for specific errors.
+First, we need to define a cost matrix and specify the dimension. We need a 2x2 cost matrix since the predicted and actual values form a 2x2 matrix.
+
+```{r c cost}
+# Make a cost matrix
+matrix_dimensions <- list(c("Bad", "Good"), c("Bad", "Good"))
+names(matrix_dimensions) <- c("predicted", "actual")
+# Assing a costmatrix to error_cost
+error_cost <- matrix(c(0, 4, 1, 0), nrow = 2, dimnames = matrix_dimensions)
+# Use the costmatrix and train the model again
+credit_cost <- 
+  C5.0(training[-1], 
+       training$Creditability, 
+       costs = error_cost,
+       trails = 10)
+```
+
+Take a look at the confusion matrix:
+
+```{r }
+credit_cost_pred <- predict.C5.0(credit_cost, testing, type = "class")
+
+CrossTable(testing$Creditability, credit_cost_pred, prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE, dnn = c('actual default', 'predicted default'))
+postResample(credit_cost_pred, testing$Creditability)
+
+```
+
+This model has lower accuracy (62.3%) with more mistakes. However, the type of errors are very different. This time it will try to reduce the costly predictions (actual bad creditability but predicted as good). 
+
+#### To-do
+* try other methods like `randomForest`, explore the `caret` function 
+* try other meta-algorithms like bagging, cross-validation
