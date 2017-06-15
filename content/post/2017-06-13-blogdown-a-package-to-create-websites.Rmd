@@ -16,7 +16,7 @@ menu: ''
 
 <!--more-->
 
-`Blogdown` is a R package to generate static websites based on [R Markdown](http://rmarkdown.rstudio.com/) and [Hugo](https://gohugo.io/), a static web engine. To be honost: It's **fantastic**!  
+`Blogdown` is a R package to generate static websites based on [R Markdown](http://rmarkdown.rstudio.com/) and [Hugo](https://gohugo.io/), a static web engine. To be honest: It's **fantastic**!  
 I've been using Wordpress for a while, with all that hassle of copy-pasting html into the wp text editor, adjusting images... Not to mention all the fuzz that goes along when using htmlwidgets. That blog-agony is all over with `blogdown`. 
 
 ## My take-ways
