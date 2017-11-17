@@ -47,11 +47,11 @@ Add an image in the `yaml` metadata of a post. This image will be used in the so
 
 ## Most important take-way
 
-There is a big difference between `blogdown::server_site()`, `blogdown::hugo_build()` and `blogdown::build_site()`:
+There is a big difference between `blogdown::serve_site()`, `blogdown::hugo_build()` and `blogdown::build_site()`:
 
-  * `blogdown::server_site()` is for local use only. It will generate `html` files of your new/adjusted (r)markdown posts.
-  * `blogdown::hugo_build()` builds the `public` skeleton, but will not generate new `html` post compared to `blogdown::server_site()`
-  * `blogdown::build_site()` builds the **whole** website for publishing 
+  * `blogdown::serve_site()` is for local use only. It will generate html files of your new/adjusted (r)markdown posts.
+  * `blogdown::hugo_build()` builds the public skeleton, but will not generate new html post compared to `blogdown::serve_site()`
+  * `blogdown::build_site()` builds the **whole** website for publishing, thus will render all `*.Rmd` files again. 
       + Make sure you set the `baseurl=` in the `config.toml` file correct before using `blogdown::build_site()` or `blogdown::hugo_build()`. The `baseurl` is needed to activate the disqus and the social widgets.
 
 

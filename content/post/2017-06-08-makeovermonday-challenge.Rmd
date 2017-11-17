@@ -229,12 +229,13 @@ leaflet_plot <- function(dataset, year) {
   pal <- colorBin(palette = "viridis", domain = dataset$Users, bins = bins)
   user_values <- dataset$Users
   # apply filter
-  internet_set_filtered <- filter(internet_set, Year == year)
+  internet_set_filtered <- filter(internet_set, Year == year) %>% na.omit()
   # get SpatialPolygonsDataFrame
   sp_internet <- joinCountryData2Map(dF = internet_set_filtered, joinCode = "ISO3", nameJoinColumn = "iso3c", nameCountryColumn = "Country2")
   
   # Make colorpalette for leaflet
-  leaflet(sp_internet) %>% 
+  leaflet(sp_internet, width = "100%") %>% 
+    setView(lat = 50.85045, lng = 4.3487800, zoom = 3) %>%
     addPolygons(
       fillColor = ~pal(Users), 
       label = ~paste(Country, Users),
@@ -251,7 +252,7 @@ leaflet_plot <- function(dataset, year) {
         fillOpacity = 0.7,
         bringToFront = TRUE),
       labelOptions = labelOptions(direction = "auto")) %>%
-    addLegend("topright", pal = pal, values = ~user_values,
+    addLegend("topright", pal = pal, values = ~user_values, position = "bottomleft",
               title = "Internetusers per 100 citizens",
               # labFormat = labelFormat(prefix = "%"),
               opacity = 1) 

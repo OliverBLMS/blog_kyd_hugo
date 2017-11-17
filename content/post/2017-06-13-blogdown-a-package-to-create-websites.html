@@ -49,11 +49,11 @@ However, for my blog I made following adjustments:</p>
 </div>
 <div id="most-important-take-way" class="section level2">
 <h2>Most important take-way</h2>
-<p>There is a big difference between <code>blogdown::server_site()</code>, <code>blogdown::hugo_build()</code> and <code>blogdown::build_site()</code>:</p>
+<p>There is a big difference between <code>blogdown::serve_site()</code>, <code>blogdown::hugo_build()</code> and <code>blogdown::build_site()</code>:</p>
 <ul>
-<li><code>blogdown::server_site()</code> is for local use only. It will generate <code>html</code> files of your new/adjusted (r)markdown posts.</li>
-<li><code>blogdown::hugo_build()</code> builds the <code>public</code> skeleton, but will not generate new <code>html</code> post compared to <code>blogdown::server_site()</code></li>
-<li><code>blogdown::build_site()</code> builds the <strong>whole</strong> website for publishing
+<li><code>blogdown::serve_site()</code> is for local use only. It will generate html files of your new/adjusted (r)markdown posts.</li>
+<li><code>blogdown::hugo_build()</code> builds the public skeleton, but will not generate new html post compared to <code>blogdown::serve_site()</code></li>
+<li><code>blogdown::build_site()</code> builds the <strong>whole</strong> website for publishing, thus will render all <code>*.Rmd</code> files again.
 <ul>
 <li>Make sure you set the <code>baseurl=</code> in the <code>config.toml</code> file correct before using <code>blogdown::build_site()</code> or <code>blogdown::hugo_build()</code>. The <code>baseurl</code> is needed to activate the disqus and the social widgets.</li>
 </ul></li>
