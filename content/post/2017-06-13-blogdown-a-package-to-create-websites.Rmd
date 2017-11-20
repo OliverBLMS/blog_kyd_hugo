@@ -54,6 +54,7 @@ There is a big difference between `blogdown::serve_site()`, `blogdown::hugo_buil
   * `blogdown::build_site()` builds the **whole** website for publishing, thus will render all `*.Rmd` files again. 
       + Make sure you set the `baseurl=` in the `config.toml` file correct before using `blogdown::build_site()` or `blogdown::hugo_build()`. The `baseurl` is needed to activate the disqus and the social widgets.
 
+My publish flow exists of step 1 and 2. And step 3 is optional and only in case when I need to render everything again.
 
 Most likely, I forgot a thing or two. So if you would like to use this theme go fetch it at  [github](https://github.com/OliverBLMS/blog_kyd_hugo).
   
